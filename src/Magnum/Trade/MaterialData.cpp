@@ -208,6 +208,14 @@ UnsignedInt MaterialData::attributeFor(const MaterialAttribute name) const {
     return attributeFor(AttributeMap[UnsignedInt(name) - 1].name);
 }
 
+#ifndef CORRADE_NO_ASSERT
+UnsignedInt MaterialData::attributeFor(const MaterialAttribute name, const char* const assertPrefix) const {
+    CORRADE_ASSERT(UnsignedInt(name) - 1 < Containers::arraySize(AttributeMap),
+        assertPrefix << "invalid name" << name, ~UnsignedInt{});
+    return attributeFor(AttributeMap[UnsignedInt(name) - 1].name);
+}
+#endif
+
 UnsignedInt MaterialData::attributeId(const Containers::StringView name) const {
     const UnsignedInt id = attributeFor(name);
     CORRADE_ASSERT(id != ~UnsignedInt{},
@@ -265,6 +273,22 @@ const void* MaterialData::attribute(const MaterialAttribute name) const {
     const UnsignedInt id = attributeFor(name);
     CORRADE_ASSERT(id != ~UnsignedInt{},
         "Trade::MaterialData::attribute(): attribute" << name << "not found", {});
+    return _data[id].value();
+}
+
+const void* MaterialData::tryAttribute(const Containers::StringView name) const {
+    const UnsignedInt id = attributeFor(name);
+    if(id == ~UnsignedInt{}) return nullptr;
+    return _data[id].value();
+}
+
+const void* MaterialData::tryAttribute(const MaterialAttribute name) const {
+    const UnsignedInt id = attributeFor(name
+        #ifndef CORRADE_NO_ASSERT
+        , "Trade::MaterialData::tryAttribute():"
+        #endif
+    );
+    if(id == ~UnsignedInt{}) return nullptr;
     return _data[id].value();
 }
 

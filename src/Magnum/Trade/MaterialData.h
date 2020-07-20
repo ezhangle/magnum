@@ -31,6 +31,7 @@
  */
 
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StringView.h>
 
 #include "Magnum/Magnum.h"
@@ -559,7 +560,11 @@ class MAGNUM_TRADE_EXPORT MaterialData {
         /** @brief Attribute count */
         UnsignedInt attributeCount() const { return _data.size(); }
 
-        /** @brief Whether the material has given attribute */
+        /**
+         * @brief Whether the material has given attribute
+         *
+         * @see @ref tryAttribute(), @ref attributeOr()
+         */
         bool hasAttribute(Containers::StringView name) const;
         bool hasAttribute(MaterialAttribute name) const; /**< @overload */
 
@@ -612,7 +617,7 @@ class MAGNUM_TRADE_EXPORT MaterialData {
          *
          * The @p name is expected to exist. Cast the pointer to a concrete
          * type based on @ref attributeType().
-         * @see @ref hasAttribute()
+         * @see @ref hasAttribute(), @ref tryAttribute(), @ref attributeOr()
          */
         const void* attribute(Containers::StringView name) const;
         const void* attribute(MaterialAttribute name) const; /**< @overload */
@@ -637,6 +642,40 @@ class MAGNUM_TRADE_EXPORT MaterialData {
         template<class T> T attribute(MaterialAttribute name) const; /**< @overload */
 
         /**
+         * @brief Type-erased attribute value, if exists
+         *
+         * Compared to @ref attribute(Containers::StringView name) const, if
+         * @p name doesn't exist, returns @cpp nullptr @ce instead of
+         * asserting. Cast the pointer to a concrete type based on
+         * @ref attributeType().
+         * @see @ref hasAttribute(), @ref attributeOr()
+         */
+        const void* tryAttribute(Containers::StringView name) const;
+        const void* tryAttribute(MaterialAttribute name) const; /**< @overload */
+
+        /**
+         * @brief Value of a named attribute, if exists
+         *
+         * Compared to @ref attribute(Containers::StringView name) const, if
+         * @p name doesn't exist, returns @ref Corrade::Containers::NullOpt
+         * instead of asserting. Expects that @p T corresponds to
+         * @ref attributeType(Containers::StringView) const for given @p name.
+         */
+        template<class T> Containers::Optional<T> tryAttribute(Containers::StringView name) const;
+        template<class T> Containers::Optional<T> tryAttribute(MaterialAttribute name) const; /**< @overload */
+
+        /**
+         * @brief Value of a named attribute or a default
+         *
+         * Compared to @ref attribute(Containers::StringView name) const, if
+         * @p name doesn't exist, returns @p defaultValue instead of asserting.
+         * Expects that @p T corresponds to
+         * @ref attributeType(Containers::StringView) const for given @p name.
+         */
+        template<class T> T attributeOr(Containers::StringView name, const T& defaultValue) const;
+        template<class T> T attributeOr(MaterialAttribute name, const T& defaultValue) const; /**< @overload */
+
+        /**
          * @brief Release data storage
          *
          * Releases the ownership of the attribute array and resets internal
@@ -659,6 +698,9 @@ class MAGNUM_TRADE_EXPORT MaterialData {
         /* Internal helper that doesn't assert, unlike attributeId() */
         UnsignedInt attributeFor(Containers::StringView name) const;
         UnsignedInt attributeFor(MaterialAttribute name) const;
+        #ifndef CORRADE_NO_ASSERT
+        UnsignedInt attributeFor(MaterialAttribute name, const char* assertPrefix) const;
+        #endif
 
         Containers::Array<MaterialAttributeData> _data;
         const void* _importerState;
@@ -741,6 +783,38 @@ template<class T> T MaterialData::attribute(MaterialAttribute name) const {
     const UnsignedInt id = attributeFor(name);
     CORRADE_ASSERT(id != ~UnsignedInt{},
         "Trade::MaterialData::attribute(): attribute" << name << "not found", {});
+    return attribute<T>(id);
+}
+
+template<class T> Containers::Optional<T> MaterialData::tryAttribute(Containers::StringView name) const {
+    const UnsignedInt id = attributeFor(name);
+    if(id == ~UnsignedInt{}) return {};
+    return attribute<T>(id);
+}
+
+template<class T> Containers::Optional<T> MaterialData::tryAttribute(MaterialAttribute name) const {
+    const UnsignedInt id = attributeFor(name
+        #ifndef CORRADE_NO_ASSERT
+        , "Trade::MaterialData::tryAttribute():"
+        #endif
+    );
+    if(id == ~UnsignedInt{}) return {};
+    return attribute<T>(id);
+}
+
+template<class T> T MaterialData::attributeOr(Containers::StringView name, const T& defaultValue) const {
+    const UnsignedInt id = attributeFor(name);
+    if(id == ~UnsignedInt{}) return defaultValue;
+    return attribute<T>(id);
+}
+
+template<class T> T MaterialData::attributeOr(MaterialAttribute name, const T& defaultValue) const {
+    const UnsignedInt id = attributeFor(name
+        #ifndef CORRADE_NO_ASSERT
+        , "Trade::MaterialData::attributeOr():"
+        #endif
+    );
+    if(id == ~UnsignedInt{}) return defaultValue;
     return attribute<T>(id);
 }
 
