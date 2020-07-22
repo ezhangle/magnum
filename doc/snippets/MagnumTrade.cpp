@@ -258,7 +258,7 @@ Trade::MaterialAttributeData b{"DiffuseColor", 0x3bd267ff_rgbaf};
 
 {
 /* [MaterialData-populating] */
-Trade::MaterialData data{{
+Trade::MaterialData data{Trade::MaterialType::Phong, {
     {Trade::MaterialAttribute::DoubleSided, true},
     {Trade::MaterialAttribute::DiffuseCoordinateSet, 5u},
     {"highlightColor", 0x00ffffff_rgbaf},
@@ -280,7 +280,7 @@ constexpr Trade::MaterialAttributeData attributes[]{
                                 {0.0f, 0.0f, 1.0f}}}
 };
 
-Trade::MaterialData data{{}, attributes};
+Trade::MaterialData data{Trade::MaterialType::Phong, {}, attributes};
 /* [MaterialData-populating-non-owned] */
 }
 
