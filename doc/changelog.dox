@@ -194,6 +194,9 @@ See also:
     @cpp Trade::AbstractMaterialData @ce aliases to, doesn't have a
     @cpp virtual @ce destructor as subclasses with extra data members aren't a
     desired use case anymore.
+-   @ref Trade::AbstractImporter::material() now returns
+    @ref Corrade::Containers::Optional instead of a @ref Corrade::Containers::Pointer,
+    as the new @ref Trade::MaterialData class isn't polymorphic anymore
 
 @section changelog-2020-06 2020.06
 
